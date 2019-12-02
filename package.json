@@ -1,0 +1,31 @@
+{
+  "name": "adventofcode-2019",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "license": "MIT",
+  "private": false,
+  "devDependencies": {
+    "@types/node": "^12.12.14",
+    "ava": "^2.4.0",
+    "ts-node": "^8.5.4",
+    "typescript": "^3.7.2"
+  },
+  "scripts": {
+    "build": "tsc --build tsconfig.json",
+    "start": "node dist/index.js",
+    "test": "ava"
+  },
+  "dependencies": {},
+  "ava": {
+    "compileEnhancements": false,
+    "extensions": [
+      "ts"
+    ],
+    "require": [
+      "ts-node/register"
+    ]
+  },
+  "description": "https://adventofcode.com/2019",
+  "repository": "git@github.com:larsmoil/adventofcode2019.git",
+  "author": "Lars-Olof Moilanen <lars.olof.moilanen@gmail.com>"
+}
