@@ -2,7 +2,7 @@ import test from 'ava';
 import { Coordinate, coordinates, intersection, shortestDistance } from "./day03-part1";
 
 test('coordinates - 1', (t) => {
-  t.deepEqual(coordinates(['R8']), [
+  t.deepEqual(coordinates(['R8'], new Coordinate(0, 0)), [
     // R8:
     new Coordinate(1, 0),
     new Coordinate(2, 0),
@@ -15,7 +15,7 @@ test('coordinates - 1', (t) => {
   ]);
 });
 test('coordinates - 2', (t) => {
-  t.deepEqual(coordinates(['R8', 'U5']), [
+  t.deepEqual(coordinates(['R8', 'U5'], new Coordinate(0, 0)), [
     // R8:
     new Coordinate(1, 0),
     new Coordinate(2, 0),
@@ -35,7 +35,7 @@ test('coordinates - 2', (t) => {
 });
 
 test('coordinates - 3', (t) => {
-  t.deepEqual(coordinates(['R8', 'U5', 'L5']), [
+  t.deepEqual(coordinates(['R8', 'U5', 'L5'], new Coordinate(0, 0)), [
     // R8:
     new Coordinate(1, 0),
     new Coordinate(2, 0),
@@ -61,7 +61,7 @@ test('coordinates - 3', (t) => {
 });
 
 test('coordinates - 4', (t) => {
-  t.deepEqual(coordinates(['R8', 'U5', 'L5', 'D3']), [
+  t.deepEqual(coordinates(['R8', 'U5', 'L5', 'D3'], new Coordinate(0, 0)), [
     // R8:
     new Coordinate(1, 0),
     new Coordinate(2, 0),
@@ -91,7 +91,7 @@ test('coordinates - 4', (t) => {
 });
 
 test('intersection', (t) => {
-  const arr1 = coordinates(['R8', 'U5', 'L5', 'D3']);
+  const arr1 = coordinates(['R8', 'U5', 'L5', 'D3', 'R5'], new Coordinate(0, 0));
   const arr2: Coordinate[] = [
     new Coordinate(8, 3),
     new Coordinate(3, 5),
