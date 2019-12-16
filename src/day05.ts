@@ -5,6 +5,10 @@ export enum InstructionType {
   MULTIPLY = 2,
   STORE = 3,
   OUTPUT = 4,
+  JUMP_IF_TRUE = 5,
+  JUMP_IF_FALSE = 6,
+  LESS_THAN = 7,
+  EQUALS = 8,
   HALT = 99,
 }
 
@@ -21,13 +25,11 @@ export interface Modes {
 
 export class Instruction {
 
-  private readonly forceImmidiateDestination: boolean;
   private readonly program: number[];
   private readonly programCounter: number;
   private readonly userInput: () => number;
 
   constructor(program: number[], programCounter: number, userInput: () => number) {
-    this.forceImmidiateDestination = true;
     this.program = program;
     this.programCounter = programCounter;
     this.userInput = userInput;
@@ -44,6 +46,14 @@ export class Instruction {
         return InstructionType.STORE;
       case 4:
         return InstructionType.OUTPUT;
+      case 5:
+        return InstructionType.JUMP_IF_TRUE;
+      case 6:
+        return InstructionType.JUMP_IF_FALSE;
+      case 7:
+        return InstructionType.LESS_THAN;
+      case 8:
+        return InstructionType.EQUALS;
       case 99:
         return InstructionType.HALT;
       default:
@@ -61,7 +71,7 @@ export class Instruction {
     };
   }
 
-  public get parameters(): number[] {
+  private get parameters(): number[] {
     const argument1 = this.program[this.programCounter + 1];
     const argument2 = this.program[this.programCounter + 2];
     const parameter1 = this.modes.mode1 === ParameterMode.IMMEDIATE ? argument1 : this.program[argument1];
@@ -69,11 +79,15 @@ export class Instruction {
     switch (this.instructionType) {
       case InstructionType.ADD:
       case InstructionType.MULTIPLY:
+      case InstructionType.JUMP_IF_FALSE:
+      case InstructionType.JUMP_IF_TRUE:
+      case InstructionType.LESS_THAN:
+      case InstructionType.EQUALS:
         return [parameter1, parameter2];
-      case InstructionType.STORE:
-        throw new Error(`InstructionType.STORE does not have any parameters.`);
       case InstructionType.OUTPUT:
         return [parameter1];
+      case InstructionType.STORE:
+        throw new Error(`InstructionType.STORE does not have any parameters.`);
       case InstructionType.HALT:
         throw new Error(`InstructionType.HALT does not have any parameters.`);
     }
@@ -92,6 +106,13 @@ export class Instruction {
       }
       case InstructionType.OUTPUT:
         return this.parameters[0];
+      case InstructionType.JUMP_IF_FALSE:
+      case InstructionType.JUMP_IF_TRUE:
+        throw new Error(`InstructionType.JUMP does not have any result.`);
+      case InstructionType.LESS_THAN:
+        return this.parameters[0] < this.parameters[1] ? 1 : 0;
+      case InstructionType.EQUALS:
+        return this.parameters[0] === this.parameters[1] ? 1 : 0;
       case InstructionType.HALT:
         return this.program[0];
     }
@@ -99,23 +120,21 @@ export class Instruction {
 
   public get destination(): number {
     const d = (offset: 1 | 3): number => {
-      const parameterModes = [
-        this.modes.mode1,
-        this.modes.mode1,
-        this.modes.mode2,
-        this.modes.mode3,
-      ];
-      const mode = parameterModes[offset];
-      const argument = this.program[this.programCounter + offset];
-      return mode === ParameterMode.IMMEDIATE || this.forceImmidiateDestination ? argument : this.program[argument];
+      return this.program[this.programCounter + offset];
     };
     switch (this.instructionType) {
       case InstructionType.ADD:
       case InstructionType.MULTIPLY:
+      case InstructionType.LESS_THAN:
+      case InstructionType.EQUALS:
         return d(3);
       case InstructionType.STORE:
       case InstructionType.OUTPUT:
         return d(1);
+      case InstructionType.JUMP_IF_FALSE:
+        return this.parameters[0] === 0 ? this.parameters[1] : this.programCounter + 3;
+      case InstructionType.JUMP_IF_TRUE:
+        return this.parameters[0] !== 0 ? this.parameters[1] : this.programCounter + 3;
       case InstructionType.HALT:
         throw new Error(`InstructionType.HALT does not have any destination.`);
     }
@@ -152,9 +171,12 @@ export class IntComputer {
         return inp;
       });
       switch (instruction.instructionType) {
-        case InstructionType.HALT:
+        case InstructionType.HALT: {
           return [instruction.result].concat(this.output);
+        }
         case InstructionType.ADD:
+        case InstructionType.EQUALS:
+        case InstructionType.LESS_THAN:
         case InstructionType.MULTIPLY: {
           this.program[instruction.destination] = instruction.result;
           i += 4;
@@ -170,6 +192,11 @@ export class IntComputer {
           i += 2;
           break;
         }
+        case InstructionType.JUMP_IF_FALSE:
+        case InstructionType.JUMP_IF_TRUE: {
+          i = instruction.destination;
+          break;
+        }
         default:
           throw new Error(`Unhandled InstructionType: ${ instruction.instructionType }`);
       }
@@ -178,24 +205,25 @@ export class IntComputer {
   }
 }
 
-export const program: (input: number[], i: number) => number[] = (inp, i) => {
+export const program: (input: number[], i: number, userInput: number) => number[] = (inp, i, userInput) => {
   return new IntComputer([...inp], i)
-    .input(1)
+    .input(userInput)
     .run();
 };
 
-export const programPt1: (input: number[], i: number) => number[] = (inp) => {
+export const programPt1: (input: number[], i: number) => number[] = (inp, i) => {
   const input = [...inp];
-  return program(input, 0);
+  return program(input, i, 1);
 };
 
-export const programPt2: (input: number[]) => number[] = () => {
-  return [];
+export const programPt2: (input: number[], i: number) => number[] = (inp, i) => {
+  const input = [...inp];
+  return program(input, i, 5);
 };
 
 if (process.mainModule && process.mainModule.filename === __filename) {
   const lines = readFileSync(0).toString().split(/\n/).filter(Boolean);
   const parsed: number[] = lines.map((l) => l.split(",").map((s) => +s)).reduce((a, n) => a.concat(n), []);
 
-  console.log(`${ programPt1(parsed, 0) } (pt.1) / [${ programPt2(parsed).join(", ") }] (pt.2)`);
+  console.log(`${ programPt1(parsed, 0) } (pt.1) / [${ programPt2(parsed, 0).join(", ") }] (pt.2)`);
 }
