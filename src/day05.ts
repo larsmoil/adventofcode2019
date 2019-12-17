@@ -156,16 +156,16 @@ export class IntComputer {
     this.output = [];
   }
 
-  public input(inp: number): IntComputer {
-    this.userInput.push(inp);
+  public input(...inp: number[]): IntComputer {
+    this.userInput.push(...inp);
     return this;
   }
 
   public run(): number[] {
     for (let i = this.startProgramCounter; i < this.program.length;) {
       const instruction = new Instruction(this.program, i, () => {
-        const inp = this.userInput.pop();
-        if (!inp) {
+        const inp = this.userInput.shift();
+        if (typeof inp === 'undefined') {
           throw new Error('Cannot supply userInput!');
         }
         return inp;
